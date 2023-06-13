@@ -13,7 +13,9 @@ extern double 止盈金额=5.8;
 extern double 加仓倍数=2;
 extern int 加仓次数=5;
 
+int comm = 1;
 int magic=121314;
+bool isEntry = False;
 int OnInit()
   {
    return(INIT_SUCCEEDED);
@@ -23,9 +25,10 @@ void OnDeinit(const int reason)
   {
 
   }
+
 //+------------------------------------------------------------------+
 void OnTick()
-  {
+  { 
    engineStart();
   }
 //+------------------------------------------------------------------+
@@ -98,7 +101,7 @@ int buy(double lots,double sl,double tp,string com,int buymagic)
         {
          string zhushi=OrderComment();
          int ma=OrderMagicNumber();
-         if(OrderSymbol()==Symbol() && OrderType()==OP_BUY && zhushi==com && ma==buymagic)
+         if(OrderSymbol()==Symbol() && OrderType()==OP_BUY && OrderComment()==com && OrderMagicNumber()==buymagic)
            {
             zhaodan=true;
             break;
@@ -124,6 +127,7 @@ int buy(double lots,double sl,double tp,string com,int buymagic)
          a=OrderSend(Symbol(),OP_BUY,lots,Ask,50,Ask-sl*Point,Ask+tp*Point,com,buymagic,0,White);
         }
      }
+     comm++;
    return(a);
   }
 //+------------------------------------------------------------------+
@@ -142,6 +146,7 @@ bool isSignalOpen()
 //+------------------------------------------------------------------+
 bool isBudan()
   {
+ 
    double candle_open1=iOpen(NULL,PERIOD_M5,1);
    double candle_close1=iClose(NULL,PERIOD_M5,1);
    double candle_open2=iOpen(NULL,PERIOD_M5,2);
@@ -149,6 +154,7 @@ bool isBudan()
    if(candle_close2<candle_open2 && candle_close1>candle_open1 && candle_close1 > candle_open2)
       return true;
    return false;
+   
   }
 //+------------------------------------------------------------------+
 bool isTakeProfit()
@@ -161,7 +167,7 @@ bool isTakeProfit()
 void budan()
   {
    if(positionOpen() <= 加仓次数 && positionOpen() > 0)
-      buy(flots(lastPositionOrderLots()*加仓倍数),0,0,"",magic);
+      buy(flots(lastPositionOrderLots()*加仓倍数),0,0,comm,magic);
   }
 //+------------------------------------------------------------------+
 double lastPositionOrderLots()
@@ -183,10 +189,19 @@ double lastPositionOrderLots()
 void engineStart()
   {
    if(isSignalOpen() == true)
-      buy(初始下单, 0, 0, "", magic);
-   if(isBudan() == true)
+      {
+      buy(初始下单, 0, 0, comm, magic);
+      isEntry =True;
+      }
+      
+   if(isBudan() == true && isEntry ==True)
+   
       budan();
+
    if(isTakeProfit() == true)
+   {
       tpBuy();
+      isEntry = False;
+      }
   }
 //+------------------------------------------------------------------+
