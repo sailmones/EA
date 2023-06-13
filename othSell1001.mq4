@@ -13,7 +13,9 @@ extern double 止盈金额=5.8;
 extern double 加仓倍数=2;
 extern int 加仓次数=5;
 
+int comm = 1;
 int magic=121312;
+bool isEntry = False;
 int OnInit()
   {
    return(INIT_SUCCEEDED);
@@ -100,7 +102,7 @@ int sell(double lots,double sl,double tp,string com,int sellmagic)
         {
          string zhushi=OrderComment();
          int ma=OrderMagicNumber();
-         if(OrderSymbol()==Symbol() && OrderType()==OP_SELL && zhushi==com && ma==sellmagic)
+         if(OrderSymbol()==Symbol() && OrderType()==OP_SELL && OrderComment()==com && OrderMagicNumber()==buymagic)
            {
             zhaodan=true;
             break;
@@ -126,6 +128,7 @@ int sell(double lots,double sl,double tp,string com,int sellmagic)
          a=OrderSend(Symbol(),OP_SELL,lots,Bid,50,Bid+sl*Point,Bid-tp*Point,com,sellmagic,0,Red);
         }
      }
+     comm++;
    return(a);
   }
 
@@ -170,7 +173,7 @@ bool isTakeProfit()
 void budan()
   {
    if(positionOpen() <= 加仓次数 && positionOpen() > 0)
-      sell(flots(lastPositionOrderLots()*加仓倍数),0,0,"",magic);
+      sell(flots(lastPositionOrderLots()*加仓倍数),0,0,comm,magic);
   }
 //+------------------------------------------------------------------+
 double lastPositionOrderLots()
@@ -192,10 +195,16 @@ double lastPositionOrderLots()
 void engineStart()
   {
    if(isSignalOpen() == true)
-      sell(初始下单, 0, 0, "", magic);
-   if(isBudan() == true)
+   {
+      sell(初始下单, 0, 0, comm, magic);
+       isEntry =True;
+      }
+   if(isBudan() == true && isEntry ==True)
       budan();
    if(isTakeProfit() == true)
+   {
       tpSell();
+       isEntry = False;
+      }
   }
 //+------------------------------------------------------------------+
